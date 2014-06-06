@@ -1,3 +1,5 @@
+require 'objspace'
+
 module Sigdump
   VERSION = "0.2.2"
 
@@ -53,9 +55,11 @@ module Sigdump
     array_size = 0
     hash_size = 0
     cmap = {}
+    cmemmap = {}
     ObjectSpace.each_object {|o|
       c = o.class
       cmap[c] = (cmap[c] || 0) + 1
+      cmemmap[c] = (cmemmap[c] || 0) + ObjectSpace.memsize_of(c)
       if c == String
         string_size += o.bytesize
       elsif c == Array
@@ -67,6 +71,11 @@ module Sigdump
 
     io.write "  All objects:\n"
     cmap.sort_by {|k,v| -v }.each {|k,v|
+      io.write "%10s: %s\n" % [_fn(v), k]
+    }
+
+    io.write "  All Memory:\n"
+    cmemmap.sort_by {|k,v| -v }.each {|k,v|
       io.write "%10s: %s\n" % [_fn(v), k]
     }
 
